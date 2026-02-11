@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "ServiceApp",
+    "slug": "service-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myserviceapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.adiya.serviceapp"
+    },
+    "android": {
+      "package": "com.adiya.serviceapp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#6366F1"
+      },
+      "edgeToEdgeEnabled": true,
+      "navigationBar": {
+        "barStyle": "light-content",
+        "backgroundColor": "#6366F1",
+        "visible": "always"
+      }
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#6366F1"
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a236030d-2aad-439a-8fc9-e8124961bc27"
+      }
+    }
+  }
+}

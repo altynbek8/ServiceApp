@@ -1,0 +1,167 @@
+
+import { Button, Icon, Input, Text, useTheme } from '@rneui/themed';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  Alert, FlatList, KeyboardAvoidingView,
+  Modal, Platform, StyleSheet, TouchableOpacity, View
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { supabase } from '../../lib/supabase';
+
+const KZ_CITIES = ['Алматы', 'Астана', 'Шымкент', 'Караганда', 'Актобе', 'Тараз', 'Павлодар', 'Усть-Каменогорск', 'Семей', 'Атырау', 'Костанай', 'Кызылорда', 'Уральск', 'Петропавловск', 'Актау', 'Темиртау', 'Туркестан', 'Кокшетау', 'Талдыкорган', 'Экибастуз', 'Рудный'].sort();
+
+export default function RegisterScreen() {
+  const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [city, setCity] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function signUpWithEmail() {
+    if (!fullName.trim()) return Alert.alert('Ошибка', 'Введите ваше имя');
+    if (!city) return Alert.alert('Ошибка', 'Пожалуйста, выберите ваш город');
+    
+    setLoading(true);
+    
+    // Регистрация в Auth с сохранением ГОРОДА в metadata
+    const { data, error } = await supabase.auth.signUp({
+      email, 
+      password, 
+      options: { 
+          data: { 
+              full_name: fullName,
+              city: city // <--- ВОТ САМОЕ ВАЖНОЕ! Сохраняем город сразу
+          } 
+      }
+    });
+
+    if (error) {
+      Alert.alert('Ошибка', error.message);
+      setLoading(false);
+      return;
+    }
+
+    if (data.session) {
+      // Идем дальше
+      router.replace('/(auth)/role-select');
+    } else {
+      Alert.alert('Проверьте почту', 'Подтвердите Email.');
+      setLoading(false);
+    }
+  }
+
+  return (
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+             <Icon name="arrow-left" type="feather" color={theme.colors.black} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.content}>
+        <View style={{ marginBottom: 30 }}>
+            <Text h2 style={{ color: theme.colors.black, fontWeight: '900' }}>Создать аккаунт</Text>
+            <Text style={{ color: theme.colors.grey2, marginTop: 5 }}>Заполните данные для регистрации</Text>
+        </View>
+
+        <Input 
+            placeholder="Иван Иванов" 
+            label="ФИО / Название" 
+            onChangeText={setFullName} value={fullName} 
+            leftIcon={<Icon name="user" type="feather" size={18} color={theme.colors.grey3} />}
+        />
+        
+        <TouchableOpacity onPress={() => setModalVisible(true)} activeOpacity={0.8}>
+            <View pointerEvents="none">
+                <Input 
+                    placeholder="Выберите город" 
+                    label="Город" 
+                    value={city} 
+                    leftIcon={<Icon name="map-pin" type="feather" size={18} color={theme.colors.grey3} />}
+                    rightIcon={<Icon name="chevron-down" type="feather" color={theme.colors.grey3} />}
+                />
+            </View>
+        </TouchableOpacity>
+        
+        <Input 
+            placeholder="email@address.com" 
+            label="Email" 
+            onChangeText={setEmail} value={email} 
+            autoCapitalize="none" keyboardType="email-address" 
+            leftIcon={<Icon name="mail" type="feather" size={18} color={theme.colors.grey3} />}
+        />
+        
+        <Input 
+            placeholder="Пароль" 
+            label="Пароль" 
+            onChangeText={setPassword} value={password} 
+            secureTextEntry 
+            leftIcon={<Icon name="lock" type="feather" size={18} color={theme.colors.grey3} />}
+        />
+        
+        <Button 
+            title="Зарегистрироваться" 
+            loading={loading} 
+            onPress={signUpWithEmail} 
+            buttonStyle={{ backgroundColor: theme.colors.primary, borderRadius: 16, height: 55, marginTop: 10 }} 
+            titleStyle={{ fontWeight: '800' }}
+        />
+
+        <TouchableOpacity onPress={() => router.back()} style={styles.linkContainer}>
+            <Text style={{ color: theme.colors.grey2 }}>Уже есть аккаунт? <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>Войти</Text></Text>
+        </TouchableOpacity>
+      </View>
+
+      <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+            <TouchableOpacity style={{ flex: 1 }} onPress={() => setModalVisible(false)} />
+            <View style={[styles.modalContent, { backgroundColor: theme.colors.background, paddingBottom: insets.bottom + 20 }]}>
+                <View style={styles.modalHeader}>
+                    <Text h4 style={{ color: theme.colors.black, fontWeight: 'bold' }}>Выберите город</Text>
+                    <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
+                        <Icon name="x" type="feather" color={theme.colors.grey2} />
+                    </TouchableOpacity>
+                </View>
+                
+                <FlatList 
+                  data={KZ_CITIES} 
+                  keyExtractor={(item) => item} 
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({item}) => (
+                    <TouchableOpacity onPress={() => { setCity(item); setModalVisible(false); }}>
+                      <View style={[styles.cityItem, { borderBottomColor: theme.colors.grey1 }]}>
+                        <Text style={{ color: item === city ? theme.colors.primary : theme.colors.black, fontSize: 16, fontWeight: item === city ? '700' : '400' }}>
+                            {item}
+                        </Text>
+                        {city === item && <Icon name="check" type="feather" color={theme.colors.primary} size={20} />}
+                      </View>
+                    </TouchableOpacity>
+                  )} 
+                />
+            </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: { paddingHorizontal: 20, paddingTop: 50 },
+  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
+  content: { padding: 25, flex: 1, justifyContent: 'center' },
+  linkContainer: { marginTop: 25, alignItems: 'center' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { height: '70%', borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 25 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  closeBtn: { padding: 5, backgroundColor: '#f1f3f5', borderRadius: 12 },
+  cityItem: { paddingVertical: 16, flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1 }
+});
